@@ -7,10 +7,12 @@ import (
 	"readlearnapp/utils"
 	"github.com/gin-gonic/gin"
 	//"github.com/gin-contrib/cors"
+
 )
 
 func init(){
-	utils.DbCollections.ConnectDb()
+	utils.InitObjectBox()
+
 }
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context){
@@ -28,8 +30,10 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 func main() {
+	defer utils.ObjectBox.Close()
 	router := gin.New()
-	router.Use(CORSMiddleware())	
+	router.Use(CORSMiddleware())
+	router.GET("/addData",routes.AddData)
 	router.GET("/getStories",routes.GetStories)
 	router.GET("/serveStoryData", routes.ServeStoryData)
 	

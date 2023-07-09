@@ -1,26 +1,20 @@
 package routes
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"os"
 	"readlearnapp/utils"
-	"github.com/gin-gonic/gin"
 )
 
 func GetStories(c *gin.Context) {
-	cursor, err := utils.DbCollections.Stories.Find(context.TODO(), bson.D{})
-	if err != nil { log.Fatal(err)}
-	var stories []utils.Story
-	for cursor.Next(context.TODO()){
-		story := utils.Story{}
-		err = cursor.Decode(&story)
-		if err != nil { log.Fatal(err)}
-		stories = append(stories, story)
+
+	stories , err := utils.Stories.GetAll()
+	if err != nil {
+		log.Fatal(err)
 	}
 	
 	JSONresponse, err := json.Marshal(stories)
@@ -30,29 +24,45 @@ func GetStories(c *gin.Context) {
 }
 
 func ServeStoryData(c *gin.Context){
-	id := c.Query("id")
-	resultS := utils.DbCollections.Stories.FindOne(context.TODO(), bson.D{{"_id",id}})
-	opts := options.FindOptions{Projection: bson.D{{"_id",0}}}
-	cursorD, err := utils.DbCollections.Dictionary.Find(context.TODO(), bson.D{{"ref",id}},&opts)
-	if err != nil { log.Fatal(err)}
-	
-	story := utils.Story{}
-	err = resultS.Decode(&story)
-	if err != nil { log.Fatal(err)}
-	
-	var dictionary []utils.Dictionary
-	for cursorD.Next(context.TODO()){
-		word := utils.Dictionary{}
-		err = cursorD.Decode(&word)
-		if err != nil { log.Fatal(err)}
-		dictionary = append(dictionary,word)
-	}
-	
-	fmt.Println(story)
+	title := c.Query("title")
+	dictionaryQuery := utils.Dictionaries.Query(utils.Dictionary_.Title.Equals(title, false))
+	dictionary, err := dictionaryQuery.Find()
 	fmt.Println(dictionary)
-	
 	JSONresponse, err := json.Marshal(dictionary)
 	if err != nil { log.Fatal(err)}
 	c.Writer.WriteHeader(404)
 	c.Writer.Write(JSONresponse)
+}
+func AddData(c *gin.Context){
+	var st []utils.Story
+	var dc []*utils.Dictionary
+	fst, err := os.Open("LearnReadApp.Stories.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fdc, err := os.Open("LearnReadApp.Dictionary.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	decoder := json.NewDecoder(fst)
+	err = decoder.Decode(&st)
+	if err != nil {
+		log.Fatal(err)
+	}
+	decoder = json.NewDecoder(fdc)
+	err = decoder.Decode(&dc)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = utils.Stories.Put(&st[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = utils.Dictionaries.PutMany(dc)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

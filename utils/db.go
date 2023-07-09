@@ -1,26 +1,19 @@
 package utils
 
 import (
-    "context"
-    "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/objectbox/objectbox-go/objectbox"
+	"log"
 )
 
-type Collections struct {
-    Stories *mongo.Collection
-	Dictionary *mongo.Collection
-}
-
-func (c *Collections) ConnectDb()  {
-	client, err := mongo.Connect(
-		context.TODO(),
-		options.Client().ApplyURI("mongodb+srv://doadmin:Z3d87ni4E91g05aX@logiciel-applab-dab57134.mongo.ondigitalocean.com/admin?tls=true&authSource=admin&replicaSet=logiciel-applab&tlsCAFile=ca-certificate.crt"))
+var ObjectBox *objectbox.ObjectBox
+var Stories *StoryBox
+var Dictionaries *DictionaryBox
+var err error
+func InitObjectBox() {
+	ObjectBox, err = objectbox.NewBuilder().Model(ObjectBoxModel()).Build()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	db :=  client.Database("LearnReadApp")
-	c.Stories = db.Collection("Stories")
-	c.Dictionary =  db.Collection("Dictionary")
+	Stories = BoxForStory(ObjectBox)
+	Dictionaries = BoxForDictionary(ObjectBox)
 }
-
-var DbCollections = Collections{}

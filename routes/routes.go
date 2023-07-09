@@ -22,7 +22,6 @@ func GetStories(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusOK)
 	c.Writer.Write(JSONresponse)
 }
-
 func ServeStoryData(c *gin.Context){
 	title := c.Query("title")
 	dictionaryQuery := utils.Dictionaries.Query(utils.Dictionary_.Title.Equals(title, false))
@@ -30,7 +29,7 @@ func ServeStoryData(c *gin.Context){
 	fmt.Println(dictionary)
 	JSONresponse, err := json.Marshal(dictionary)
 	if err != nil { log.Fatal(err)}
-	c.Writer.WriteHeader(404)
+	c.Writer.WriteHeader(http.StatusOK)
 	c.Writer.Write(JSONresponse)
 }
 func AddData(c *gin.Context){
@@ -65,4 +64,29 @@ func AddData(c *gin.Context){
 	if err != nil {
 		log.Fatal(err)
 	}
+	c.Writer.WriteHeader(http.StatusOK)
+}
+func DeleteStory(c *gin.Context){
+	title := c.Query("title")
+	storyQuery := utils.Stories.Query(utils.Story_.Title.Equals(title, false))
+	dictionaryQuery := utils.Dictionaries.Query(utils.Dictionary_.Title.Equals(title, false))
+
+	idSt , err := storyQuery.FindIds()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	idDc, err :=  dictionaryQuery.FindIds()
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = utils.Stories.RemoveIds(idSt...)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = utils.Dictionaries.RemoveIds(idDc...)
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.Writer.WriteHeader(http.StatusOK)
 }

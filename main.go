@@ -36,6 +36,7 @@ func main() {
 	router.GET("/addData",routes.AddData)
 	router.GET("/getStories",routes.GetStories)
 	router.GET("/serveStoryData", routes.ServeStoryData)
+	router.GET("/deleteStory", routes.DeleteStory)
 	
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)
